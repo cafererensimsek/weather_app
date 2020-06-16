@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "917088022399",
+    "firebase_url": "https://weather-app-68db1.firebaseio.com",
+    "project_id": "weather-app-68db1",
+    "storage_bucket": "weather-app-68db1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:917088022399:android:1703afde920aed1451b44a",
+        "android_client_info": {
+          "package_name": "com.advitour.weather_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "917088022399-7ff5acej9fqsf252m28pmhcisme2uaum.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWYx_lBls5ybb2E6bd18oNCiPxKsvFPTQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "917088022399-7ff5acej9fqsf252m28pmhcisme2uaum.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
