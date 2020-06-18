@@ -31,7 +31,6 @@ class _BodyState extends State<Body> {
   final passwordController = TextEditingController();
   String email;
   String password;
-  bool isSignedUp = false;
 
   @override
   void initState() {
@@ -55,7 +54,40 @@ class _BodyState extends State<Body> {
     password = passwordController.text;
   }
 
-  Widget signInButton() {
+  signUp() async {
+    try {
+      FirebaseUser user = (await FirebaseAuth.instance
+              .createUserWithEmailAndPassword(email: email, password: password))
+          .user;
+      if (user == null) {
+        return SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline),
+              Text(
+                  'Password length must be at least 6 characters! \n Sample email: example@example.com'),
+              SizedBox(width: 30),
+            ],
+          ),
+        );
+      } else {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => Home(user: user)));
+      }
+    } catch (e) {
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error_outline),
+            Text(e.message),
+            SizedBox(width: 30),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget button() {
     return FlatButton(
       onPressed: () async {
         try {
@@ -65,28 +97,24 @@ class _BodyState extends State<Body> {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => Home(user: user)));
         } catch (e) {
-          print(e.message);
+          switch (e.code) {
+            case "ERROR_USER_NOT_FOUND":
+              signUp();
+              break;
+            default:
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.error_outline),
+                    Text(e.message),
+                    SizedBox(width: 30),
+                  ],
+                ),
+              );
+          }
         }
       },
-      child: Text('Sign In'),
-    );
-  }
-
-  Widget signUpButton() {
-    return FlatButton(
-      onPressed: () async {
-        try {
-          FirebaseUser user = (await FirebaseAuth.instance
-                  .createUserWithEmailAndPassword(
-                      email: email, password: password))
-              .user;
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => Home(user: user)));
-        } catch (e) {
-          print(e.message);
-        }
-      },
-      child: Text('Sign Up'),
+      child: Text('Get Weather'),
     );
   }
 
@@ -107,8 +135,7 @@ class _BodyState extends State<Body> {
             hintText: 'Password',
           ),
         ),
-        signInButton(),
-        signUpButton(),
+        button(),
       ]),
     );
   }

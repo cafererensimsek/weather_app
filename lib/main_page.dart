@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter_image/network.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,7 +33,7 @@ class _ResultsState extends State<Results> {
   LocationData currentLocation;
   StreamSubscription<LocationData> locationSubscription;
   Location location = new Location();
-  String longtitude, latitude, day, month;
+  String longtitude, latitude;
   var currentData;
   Map dailyData = new Map();
 
@@ -66,36 +67,27 @@ class _ResultsState extends State<Results> {
     setState(() {
       if (newLocation != null) {
         currentLocation = newLocation;
-        DateTime now = new DateTime.now();
-        var date = new DateTime(now.month, now.day);
-        day = date.day.toString();
-        month = date.month.toString();
+        locationSubscription.cancel();
       } else {
         initPlatformState();
+        /* DateTime now = new DateTime.now();
+        var date = new DateTime(now.month, now.day);
+        String day = date.day.toString();
+        String month = date.month.toString(); */
       }
     });
   }
 
-  Future<Map> getData(http.Client client) async {
+  Future<Map> getDailyData(http.Client client) async {
     latitude = currentLocation.latitude.toString();
     longtitude = currentLocation.longitude.toString();
     String url =
         'https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longtitude&appid=3553bf2bbbd9d1f3c4fa66d28e79846b';
     http.Response response = await client.get(url);
-
-    return parseData(response.body);
+    return parseDailyData(response.body);
   }
 
-  Future getMap(http.Client client) async {
-    latitude = currentLocation.latitude.toString();
-    longtitude = currentLocation.longitude.toString();
-    String map =
-        'https://tile.openweathermap.org/map/precipitation_new/1/$latitude/$longtitude.png?APPID=3553bf2bbbd9d1f3c4fa66d28e79846b';
-    http.Response responseMap = await client.get(map);
-    return responseMap;
-  }
-
-  Map parseData(responseBody) {
+  Map parseDailyData(responseBody) {
     Map gotData = json.decode(responseBody);
     dailyData['weather'] = gotData['weather'][0]['description'];
     dailyData['temp'] = gotData['main']['temp'] - 273.15;
@@ -103,35 +95,53 @@ class _ResultsState extends State<Results> {
     return dailyData;
   }
 
+  Map parseWeeklyData(responseBody) {
+    Map gotData = json.decode(responseBody);
+    dailyData['weather'] = gotData['weather'][0]['description'];
+    dailyData['temp'] = gotData['main']['temp'] - 273.15;
+    dailyData['main_weather'] = gotData['weather'][0]['main'];
+    return dailyData;
+  }
+
+  Widget result(AsyncSnapshot snapshot) {
+    return ListView(children: [
+      Card(
+        child: Image(
+          image: NetworkImageWithRetry(
+              'https://tile.openweathermap.org/map/precipitation_new/1/$latitude/$longtitude.png?APPID=3553bf2bbbd9d1f3c4fa66d28e79846b'),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: Icon(Icons.cloud),
+          title: Text(snapshot.data['main_weather']),
+          subtitle: Text(
+              '${snapshot.data['weather']} \n${snapshot.data['temp'].toStringAsFixed(2)} Degrees'),
+        ),
+      ),
+    ]);
+  }
+
+  Widget loading() {
+    return Scaffold(
+      backgroundColor: Theme.of(context).accentColor,
+      body: Center(
+        child: SpinKitFadingCube(
+          color: Theme.of(context).primaryColor,
+          size: 100.0,
+        ),
+      ),
+    );
+  }
+
   Widget weeklyData() {
     return FutureBuilder(
-      future: getData(http.Client()),
+      future: getDailyData(http.Client()),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return ListView(children: [
-            /* Card(
-                child: Container(
-              child: snapshot.data[1],
-            )), */
-            Card(
-              child: ListTile(
-                leading: Icon(Icons.cloud),
-                title: Text(snapshot.data['main_weather']),
-                subtitle: Text(
-                    '${snapshot.data['weather']} \n${snapshot.data['temp'].toStringAsFixed(2)}'),
-              ),
-            ),
-          ]);
+          return result(snapshot);
         } else {
-          return Scaffold(
-            backgroundColor: Theme.of(context).accentColor,
-            body: Center(
-              child: SpinKitFadingCube(
-                color: Theme.of(context).primaryColor,
-                size: 100.0,
-              ),
-            ),
-          );
+          return loading();
         }
       },
     );
