@@ -55,25 +55,25 @@ class _BodyState extends State<Body> {
   }
 
   signUp() async {
+    if (password.length < 6) {
+      return SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error_outline),
+            Text(
+                'Password length must be at least 6 characters! \n Sample email: example@example.com'),
+            SizedBox(width: 30),
+          ],
+        ),
+      );
+    }
     try {
       FirebaseUser user = (await FirebaseAuth.instance
               .createUserWithEmailAndPassword(email: email, password: password))
           .user;
-      if (user == null) {
-        return SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline),
-              Text(
-                  'Password length must be at least 6 characters! \n Sample email: example@example.com'),
-              SizedBox(width: 30),
-            ],
-          ),
-        );
-      } else {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Home(user: user)));
-      }
+
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => Home(user: user)));
     } catch (e) {
       SnackBar(
         content: Row(
@@ -111,6 +111,7 @@ class _BodyState extends State<Body> {
                   ],
                 ),
               );
+              break;
           }
         }
       },
