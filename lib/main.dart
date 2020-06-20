@@ -32,6 +32,18 @@ class _BodyState extends State<Body> {
   String email;
   String password;
 
+  snackbar(txt) {
+    return SnackBar(
+      content: Row(
+        children: [
+          Icon(Icons.error_outline),
+          SizedBox(width: 30),
+          Flexible(child: Text(txt)),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -55,18 +67,6 @@ class _BodyState extends State<Body> {
   }
 
   signUp() async {
-    if (password.length < 6) {
-      return SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline),
-            Text(
-                'Password length must be at least 6 characters! \n Sample email: example@example.com'),
-            SizedBox(width: 30),
-          ],
-        ),
-      );
-    }
     try {
       FirebaseUser user = (await FirebaseAuth.instance
               .createUserWithEmailAndPassword(email: email, password: password))
@@ -75,47 +75,39 @@ class _BodyState extends State<Body> {
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => Home(user: user)));
     } catch (e) {
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline),
-            Text(e.message),
-            SizedBox(width: 30),
-          ],
-        ),
-      );
+      return;
     }
   }
 
   Widget button() {
-    return FlatButton(
-      onPressed: () async {
-        try {
-          FirebaseUser user = (await FirebaseAuth.instance
-                  .signInWithEmailAndPassword(email: email, password: password))
-              .user;
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => Home(user: user)));
-        } catch (e) {
-          switch (e.code) {
-            case "ERROR_USER_NOT_FOUND":
-              signUp();
-              break;
-            default:
-              SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.error_outline),
-                    Text(e.message),
-                    SizedBox(width: 30),
-                  ],
-                ),
-              );
-              break;
+    return Builder(
+      builder: (context) => FlatButton(
+        onPressed: () async {
+          try {
+            FirebaseUser user = (await FirebaseAuth.instance
+                    .signInWithEmailAndPassword(
+                        email: email, password: password))
+                .user;
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => Home(user: user)));
+          } catch (e) {
+            switch (e.code) {
+              case "ERROR_USER_NOT_FOUND":
+                if (password.length >= 6) {
+                  signUp();
+                } else {
+                  Scaffold.of(context).showSnackBar(
+                      snackbar('Password must be at least 6 characters!'));
+                }
+                break;
+              default:
+                Scaffold.of(context).showSnackBar(snackbar(e.message));
+                break;
+            }
           }
-        }
-      },
-      child: Text('Get Weather'),
+        },
+        child: Text('Get Weather'),
+      ),
     );
   }
 
@@ -137,6 +129,8 @@ class _BodyState extends State<Body> {
           ),
         ),
         button(),
+        SizedBox(height: 100),
+        Text('An account will be created if you don\'t have one'),
       ]),
     );
   }

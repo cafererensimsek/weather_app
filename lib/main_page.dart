@@ -37,6 +37,18 @@ class _ResultsState extends State<Results> {
   var currentData;
   Map dailyData = new Map();
 
+  snackbar(txt) {
+    return SnackBar(
+      content: Row(
+        children: [
+          Icon(Icons.error_outline),
+          Text(txt),
+          SizedBox(width: 30),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -54,15 +66,7 @@ class _ResultsState extends State<Results> {
     try {
       newLocation = await location.getLocation();
     } on PlatformException catch (e) {
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline),
-            Text(e.code),
-            SizedBox(width: 30),
-          ],
-        ),
-      );
+      Scaffold.of(context).showSnackBar((snackbar(e.message)));
     }
     setState(() {
       if (newLocation != null) {
