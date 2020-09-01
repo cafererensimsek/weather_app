@@ -36,6 +36,7 @@ class _ResultsState extends State<Results> {
   String longtitude, latitude;
   var currentData;
   Map dailyData = new Map();
+  List dataWeekly = [];
 
   snackbar(txt) {
     return SnackBar(
@@ -82,7 +83,7 @@ class _ResultsState extends State<Results> {
     });
   }
 
-  Future<Map> getDailyData(http.Client client) async {
+/*   Future<Map> getDailyData(http.Client client) async {
     latitude = currentLocation.latitude.toString();
     longtitude = currentLocation.longitude.toString();
     String url =
@@ -97,14 +98,27 @@ class _ResultsState extends State<Results> {
     dailyData['temp'] = gotData['main']['temp'] - 273.15;
     dailyData['main_weather'] = gotData['weather'][0]['main'];
     return dailyData;
+  } */
+
+  Future<List> getWeeklyData(http.Client client) async {
+    latitude = currentLocation.latitude.toString();
+    longtitude = currentLocation.longitude.toString();
+    String url =
+        'https://api.openweathermap.org/data/2.5/onecall?lat=$latitude&lon=$longtitude&appid=3553bf2bbbd9d1f3c4fa66d28e79846b';
+    http.Response response = await client.get(url);
+    return parseWeeklyData(response.body);
   }
 
-  Map parseWeeklyData(responseBody) {
+  List parseWeeklyData(responseBody) {
     Map gotData = json.decode(responseBody);
-    dailyData['weather'] = gotData['weather'][0]['description'];
-    dailyData['temp'] = gotData['main']['temp'] - 273.15;
-    dailyData['main_weather'] = gotData['weather'][0]['main'];
-    return dailyData;
+    gotData['daily'].forEach((harita) => {
+          dataWeekly.add({
+            'weather': harita['weather'][0]['description'],
+            'temp': harita['temp']['day'] - 273.15,
+            'main_weather': harita['weather'][0]['main']
+          })
+        });
+    return dataWeekly;
   }
 
   Widget result(AsyncSnapshot snapshot) {
@@ -112,17 +126,26 @@ class _ResultsState extends State<Results> {
       Card(
         child: Image(
           image: NetworkImageWithRetry(
-              'https://tile.openweathermap.org/map/precipitation_new/1/$latitude/$longtitude.png?APPID=3553bf2bbbd9d1f3c4fa66d28e79846b'),
+              'https://tile.openweathermap.org/map/precipitation_new/1/1/0.png?APPID=3553bf2bbbd9d1f3c4fa66d28e79846b'),
         ),
       ),
-      Card(
+/*       Card(
         child: ListTile(
           leading: Icon(Icons.cloud),
           title: Text(snapshot.data['main_weather']),
           subtitle: Text(
               '${snapshot.data['weather']} \n${snapshot.data['temp'].toStringAsFixed(2)} Degrees'),
         ),
-      ),
+      ), */
+      for (var data in dataWeekly)
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.cloud),
+            title: Text(data['main_weather']),
+            subtitle: Text(
+                '${data['weather']} \n${data['temp'].toStringAsFixed(2)} Degrees'),
+          ),
+        ),
     ]);
   }
 
@@ -139,8 +162,9 @@ class _ResultsState extends State<Results> {
   }
 
   Widget weeklyData() {
+    //var weekly = getWeeklyData(http.Client());
     return FutureBuilder(
-      future: getDailyData(http.Client()),
+      future: getWeeklyData(http.Client()),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return result(snapshot);
